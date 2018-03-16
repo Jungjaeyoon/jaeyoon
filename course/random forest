@@ -1,0 +1,50 @@
+rom sklearn.tree import DecisionTreeClassifier
+import pandas as pd
+import numpy as np
+from sklearn.cross_validation import train_test_split
+from collections import Counter
+
+#Randomforest using many many decisiontree
+
+#parameter
+n_estimators= [1, 5, 10, 20, 30, 50]
+max_features = [10, 15, 19]
+test_size = 0.2
+min_samples_split = 10
+subset_n = 130
+
+
+#sample data
+df = pd.read_table('segmentation.data', sep = "," ,skiprows=[0,1],header=0,names =['SEGMENTATION','REGION-CENTROID-COL','REGION-CENTROID-ROW','REGION-PIXEL-COUNT','SHORT-LINE-DENSITY-5','SHORT-LINE-DENSITY-2','VEDGE-MEAN','VEDGE-SD','HEDGE-MEAN','HEDGE-SD','INTENSITY-MEAN','RAWRED-MEAN','RAWBLUE-MEAN','RAWGREEN-MEAN','EXRED-MEAN','EXBLUE-MEAN','EXGREEN-MEAN','VALUE-MEAN','SATURATION-MEAN','HUE-MEAN'])
+
+
+X = df.drop('SEGMENTATION', 1)
+Y = df['SEGMENTATION']
+#data 
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=test_size, random_state=100, stratify= Y)
+
+
+predictresults=[]
+for p in n_estimators:
+	for f in max_features:
+		predictresult=[]
+		predictall = []
+		calculate= []
+		# n_estimate 횟수만큼 트리를 만들어 결과물을 predictall에 저장함
+		for x in range(p):
+			sampleX=pd.DataFrame.sample(X_train,n=subset_n,replace=True)
+			sampleY=pd.DataFrame(Y_train, index = sampleX.index)
+			clf = DecisionTreeClassifier(max_features= f,min_samples_split=min_samples_split)
+			clf.fit(sampleX,sampleY)
+			predictall.append(clf.predict(X_test))
+		# 저장한 결과물들에서 각 예측값의 최빈값을 뽑아 최종 결과값으로 저장함 	
+		for i in range(len(X_test)):
+			for x in range(p):			
+				calculate.append(predictall[x][i])
+			cnt = Counter(calculate)
+			predictresult.append(cnt.most_common(1)[0][0])
+			calculate=[]
+		predictresults.append([p,f,predictresults])
+		print("n_estimators : ",p, ",  max_features : " , f ,",  score : ", score(predictresult,Y_test))
+
+print(predictresults)
